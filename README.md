@@ -3,8 +3,7 @@ A Rust binary for easy [road warrior](https://en.wikipedia.org/wiki/Road_warrior
 [Wireguard](https://www.wireguard.com/) VPN setup. 
 
 ## Quickstart
-`TODO`
-
+`TODO setup with default values`
 
 ### (Optional) DNS Configuration
 `roadguard` can manage and update your DNS record to point to your public IP address. See the
