@@ -11,7 +11,11 @@ At this time `roadguard` only runs on Linux.
 
 ### Setup a WireGuard Server with Default Values
 In a terminal run:
-`sudo roadguard setup`
+
+```bash
+cargo build --release
+sudo ./target/release/roadguard setup
+```
 
 This configures the system to act as a WireGuard server with IPTables rules configured 
 to allow regular internet access via traffic forwarding. 
