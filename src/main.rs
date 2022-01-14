@@ -169,7 +169,7 @@ DNS = 1.1.1.1
 
 PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {} -j MASQUERADE
 PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {} -j MASQUERADE
-        ", ip, private_key, interface, interface);
+", ip, private_key, interface, interface);
 
     println!("{}", wg0_conf);
 
