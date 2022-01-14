@@ -1,16 +1,20 @@
-# roadguard
+# `roadguard`
 A Rust binary for easy [road warrior](https://en.wikipedia.org/wiki/Road_warrior_(computing)) 
 [Wireguard](https://www.wireguard.com/) VPN setup. 
 
 ## Quickstart
-At this time roadguard only runs on Linux.
+At this time `roadguard` only runs on Linux.
 
 #### Prerequisites
 * Wireguard
     * See [Wireguard Installation Instructions](https://www.wireguard.com/install/)
 
-### Setup a WireGuard Server that forwards traffic
+### Setup a WireGuard Server with Default Values
+In a terminal run:
 `sudo roadguard setup`
+
+This configures the system to act as a WireGuard server with IPTables rules configured 
+to allow regular internet access via traffic forwarding. 
 
 
 
