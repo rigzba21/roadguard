@@ -2,6 +2,7 @@ use clap::Parser;
 
 use std::process::{Command, Stdio};
 use std::fs::File;
+use std::os::unix::fs::PermissionsExt;
 use std::fs;
 use std::io::{Write};
 
@@ -50,6 +51,19 @@ fn generate_private_key() {
 fn write_key_file(key: String, file: String) -> std::io::Result<()> {
     let mut file = File::create(file)?;
     file.write_all(key.as_bytes())?;
+    Ok(())
+}
+
+fn write_wg0_conf(wg0_conf: String, file: String) -> std::io::Result<()> {
+    let mut file = File::create(file)?;
+    let metadata = file.metadata()?;
+    let mut permissions = metadata.permissions();
+
+    // umask 077
+    permissions.set_mode(0o077); 
+    assert_eq!(permissions.mode(), 0o077);
+
+    file.write_all(wg0_conf.as_bytes())?;
     Ok(())
 }
 
@@ -173,16 +187,15 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACC
 
     println!("{}", wg0_conf);
 
-    let result = write_key_file(wg0_conf, String::from("/etc/wireguard/wg0.conf"));
+    let result = write_wg0_conf(wg0_conf, String::from("/etc/wireguard/wg0.conf"));
 
     match result {
         Ok(()) => {
-            println!("Successfully Wrote wg0.conf")
+            println!("Successfully Wrote wg0.conf");
         }
         _ => eprintln!("Error Writing /etc/wireguard/wg0.conf, please run: \n sudo roadguard setup")
     }
 }
-
 
 
 fn main() {
@@ -196,13 +209,13 @@ fn main() {
             println!("IP ADDRESS: {}", ip);
 
             generate_private_key();
+
             generate_public_key();
         
             let default_interface = get_default_ip_dev().unwrap();
             
             generate_wg0_conf(ip, default_interface);
             
-
        } 
        RoadGuardAction::AddClient => {
         // TODO
