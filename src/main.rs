@@ -32,7 +32,7 @@ fn generate_private_key() {
     }
 }
 
-/// Write our private key to a file for basic persistence 
+/// Write our key to a file for basic persistence 
 fn write_key_file(key: String, file: String) -> std::io::Result<()> {
     let mut file = File::create(file)?;
     file.write_all(key.as_bytes())?;
@@ -106,6 +106,7 @@ fn generate_public_key() {
     }
 }
 
+/// Get the Default Network Interface Device Name
 fn get_default_ip_dev() -> Result<String, WgInitErrors> {
     let _ip_route_show_to_default = Command::new("ip")
         .arg("-o")
