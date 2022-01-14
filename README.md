@@ -3,7 +3,14 @@ A Rust binary for easy [road warrior](https://en.wikipedia.org/wiki/Road_warrior
 [Wireguard](https://www.wireguard.com/) VPN setup. 
 
 ## Quickstart
-`TODO setup with default values`
+At this time roadguard only runs on Linux.
+
+#### Prerequisites
+* Wireguard
+    * See [Wireguard Installation Instructions](https://www.wireguard.com/install/)
+
+### Setup a WireGuard Server that forwards traffic
+`sudo roadguard setup`
 
 
 

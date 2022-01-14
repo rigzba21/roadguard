@@ -2,6 +2,7 @@ use clap::Parser;
 
 use std::process::{Command, Stdio};
 use std::fs::File;
+use std::fs;
 use std::io::{Write};
 
 #[derive(Debug)]
@@ -9,7 +10,9 @@ pub enum WgInitErrors {
     FailedToGenPrivateKey,
     FailedToGenPublicKey,
     FailedToGetDefaultDevice,
+    FailedToWriteWG0Conf,
 }
+
 #[derive(Debug)]
 #[derive(clap::Subcommand)]
 enum RoadGuardAction {
@@ -43,7 +46,7 @@ fn generate_private_key() {
     }
 }
 
-/// Write our key to a file for basic persistence 
+/// Write key files for persistant usage
 fn write_key_file(key: String, file: String) -> std::io::Result<()> {
     let mut file = File::create(file)?;
     file.write_all(key.as_bytes())?;
@@ -152,6 +155,36 @@ fn get_default_ip_dev() -> Result<String, WgInitErrors> {
     }
 }
 
+fn generate_wg0_conf(ip: String, interface: String) {
+    let private_key = fs::read_to_string("server_private_key")
+        .expect("Error Reading server_private_key");
+    
+    let wg0_conf = format!(
+"[Interface]
+Address = {}/24
+SaveConfig = true
+PrivateKey = {}
+ListenPort = 51900
+DNS = 1.1.1.1
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {} -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {} -j MASQUERADE
+        ", ip, private_key, interface, interface);
+
+    println!("{}", wg0_conf);
+
+    let result = write_key_file(wg0_conf, String::from("/etc/wireguard/wg0.conf"));
+
+    match result {
+        Ok(()) => {
+            println!("Successfully Wrote wg0.conf")
+        }
+        _ => eprintln!("Error Writing /etc/wireguard/wg0.conf, please run: \n sudo roadguard setup")
+    }
+}
+
+
+
 fn main() {
     let args = Args::parse();
 
@@ -159,12 +192,17 @@ fn main() {
 
     match subcommand {
        RoadGuardAction::Setup => {
-        println!("IP ADDRESS: {}", args.ip);
+            let ip = args.ip;
+            println!("IP ADDRESS: {}", ip);
 
-        generate_private_key();
-        generate_public_key();
-    
-        let default_interface = get_default_ip_dev().unwrap();
+            generate_private_key();
+            generate_public_key();
+        
+            let default_interface = get_default_ip_dev().unwrap();
+            
+            generate_wg0_conf(ip, default_interface);
+            
+
        } 
        RoadGuardAction::AddClient => {
         // TODO
