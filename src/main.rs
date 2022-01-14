@@ -10,6 +10,13 @@ pub enum WgInitErrors {
     FailedToGenPublicKey,
     FailedToGetDefaultDevice,
 }
+#[derive(Debug)]
+#[derive(clap::Subcommand)]
+enum RoadGuardAction {
+   Setup,
+   AddClient,
+   RemoveClient,
+}
 
 #[derive(Parser, Debug)]
 #[clap(author = "Jon V [rigzba21]", version = "0.0.1", about = "roadguard - Setup a Road Warrior Style Wireguard VPN", long_about = None)]
@@ -17,6 +24,10 @@ struct Args {
     /// IP Address to set the Wireguard Server
     #[clap(short, long, default_value = "10.253.3.1")]
     ip: String,
+
+    /// Subcommand to generate client config
+    #[clap(subcommand)]
+    action: RoadGuardAction,
 }
 
 /// Generate the WireGuard Server Private Key
@@ -143,11 +154,26 @@ fn get_default_ip_dev() -> Result<String, WgInitErrors> {
 
 fn main() {
     let args = Args::parse();
-    println!("IP ADDRESS: {}", args.ip);
 
-    generate_private_key();
-    generate_public_key();
+    let subcommand = args.action;
 
-    let default_interface = get_default_ip_dev().unwrap();
+    match subcommand {
+       RoadGuardAction::Setup => {
+        println!("IP ADDRESS: {}", args.ip);
+
+        generate_private_key();
+        generate_public_key();
+    
+        let default_interface = get_default_ip_dev().unwrap();
+       } 
+       RoadGuardAction::AddClient => {
+        // TODO
+        println!("This functionality is a WIP");
+       }
+       RoadGuardAction::RemoveClient => {
+        // TODO
+        println!("This functionality is a WIP");
+       }
+    }
 
 }
