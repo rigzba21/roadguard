@@ -79,7 +79,7 @@ fn wg_genkey() -> Result<String, WgInitErrors> {
     match status_code {
         Some(0) => {
             let wg_private_key = String::from_utf8(output.stdout).unwrap();
-            println!("PRIVATE KEY: {}", wg_private_key);
+            println!("PRIVATE KEY: {}", wg_private_key.replace("\n", ""));
             return Ok(wg_private_key);
         }
         _ => {
@@ -110,7 +110,7 @@ fn wg_pubkey() -> Result<String, WgInitErrors>{
     match status_code {
         Some(0) => {
             let wg_public_key = String::from_utf8(output.stdout).unwrap();
-            println!("PUBLIC KEY: {}", wg_public_key);
+            println!("PUBLIC KEY: {}", wg_public_key.replace("\n", ""));
             return Ok(wg_public_key);
         }
         _ => {
@@ -158,7 +158,7 @@ fn get_default_ip_dev() -> Result<String, WgInitErrors> {
     match _status_code {
         Some(0) => {
             let default_device = String::from_utf8(output.stdout).unwrap();
-            println!("DEFAULT INTERFACE: {}", default_device);
+            println!("DEFAULT INTERFACE: {}", default_device.replace("\n", ""));
             return Ok(default_device);
         }
         _ => {
@@ -173,6 +173,10 @@ fn generate_wg0_conf(ip: String, interface: String) {
     let private_key = fs::read_to_string("server_private_key")
         .expect("Error Reading server_private_key");
     
+    let ip_val = ip.replace("\n", "");
+    let private_key_val = private_key.replace("\n", "");
+    let interface_val = interface.replace("\n", "");
+    
     let wg0_conf = format!(
 "[Interface]
 Address = {}/24
@@ -183,7 +187,7 @@ DNS = 1.1.1.1
 
 PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {} -j MASQUERADE
 PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {} -j MASQUERADE
-", ip, private_key, interface, interface);
+", ip_val, private_key_val, interface_val, interface_val);
 
     println!("{}", wg0_conf);
 
@@ -221,7 +225,12 @@ fn reload_sysctl() {
     .output()
     .expect("failed to execute process");
 
-    println!("{:#?}", String::from_utf8(output.stderr).unwrap());
+    //println!("{:#?}", String::from_utf8(output.stderr).unwrap());
+    let status_code = output.status.code();
+    match status_code {
+        Some(0) => println!("Successfully reloaded sysctl"),
+        _ => eprintln!("Error reloading sysctl")
+    }
 }
 
 fn enable_wg_on_startup() {
@@ -234,7 +243,7 @@ fn enable_wg_on_startup() {
     let systemctl_enable_status_code = systemctl_output.status.code();
     match systemctl_enable_status_code {
         Some(0) =>  {
-            println!("{:#?}", String::from_utf8(systemctl_output.stdout).unwrap());
+            //println!("{:#?}", String::from_utf8(systemctl_output.stdout).unwrap());
             println!("Successfully ran: systemctl enable wg-quick@wg0");
         }
         _ => eprintln!("Error running systemctl enable wg-quick@wg0\n {:#?}", String::from_utf8(systemctl_output.stderr).unwrap())

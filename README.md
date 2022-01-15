@@ -22,16 +22,34 @@ to allow regular internet access via traffic forwarding.
 
 ## Development
 
-There is a `Containerfile` for easy development and testing.
+There is a `Vagrantfile` for easy development and testing.
 
-Build the container:
+Run the Vagrant machine:
 ```bash
-podman build -t roadguard:dev
+vagrant up
 ```
 
-Run it:
+SSH Into the Vagrant machine:
 ```bash
-podman run --rm -it roadguard:dev sudo ./roadguard setup
+vagrant ssh
+```
+
+Make sure Rust is installed:
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+```
+
+Build the `roadguard` binary:
+```bash
+cd /vagrant
+
+cargo build --release
+```
+
+Run `roadguard` setup:
+```bash
+sudo ./target/release/roadguard setup
 ```
 
 
