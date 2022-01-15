@@ -216,19 +216,11 @@ fn setup_port_forwarding() {
 fn reload_sysctl() {
     let output = Command::new("sysctl")
     .arg("-p")
-    .arg(">")
-    .arg("/dev/null")
     .output()
     .expect("failed to execute process");
 
-    let status_code = output.status.code();
-
-    match status_code {
-        Some(0) => println!("Successfully reloaded sysctl"),
-        _ => eprintln!("Error running sysctl -p > /dev/null")
-    } 
+    println!("{:#?}", String::from_utf8(output.stderr).unwrap());
 }
-
 
 fn main() {
     let args = Args::parse();
@@ -249,6 +241,8 @@ fn main() {
             generate_wg0_conf(ip, default_interface);
 
             setup_port_forwarding();
+
+            reload_sysctl();
             
        } 
        RoadGuardAction::AddClient => {
@@ -260,5 +254,4 @@ fn main() {
         println!("This functionality is a WIP");
        }
     }
-
 }

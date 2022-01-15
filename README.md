@@ -20,6 +20,19 @@ sudo ./target/release/roadguard setup
 This configures the system to act as a WireGuard server with IPTables rules configured 
 to allow regular internet access via traffic forwarding. 
 
+## Development
+
+There is a `Containerfile` for easy development and testing.
+
+Build the container:
+```bash
+podman build -t roadguard:dev
+```
+
+Run it:
+```bash
+podman run --rm -it roadguard:dev bash
+```
 
 
 
