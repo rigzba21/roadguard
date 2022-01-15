@@ -197,6 +197,38 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACC
     }
 }
 
+fn setup_port_forwarding() {
+    let output = Command::new("sed")
+        .arg("-i")
+        .arg("/net.ipv4.ip_forward=1/s/^#//g")
+        .arg("/etc/sysctl.conf")
+        .output()
+        .expect("failed to execute process");
+
+    let status_code = output.status.code();
+
+    match status_code {
+        Some(0) => println!("Successfully configured traffic port-forwarding in /etc/sysctl.conf"),
+        _ => eprintln!("Error configuring port-forwarding in /etc/sysctl.conf")
+    }
+}
+
+fn reload_sysctl() {
+    let output = Command::new("sysctl")
+    .arg("-p")
+    .arg(">")
+    .arg("/dev/null")
+    .output()
+    .expect("failed to execute process");
+
+    let status_code = output.status.code();
+
+    match status_code {
+        Some(0) => println!("Successfully reloaded sysctl"),
+        _ => eprintln!("Error running sysctl -p > /dev/null")
+    } 
+}
+
 
 fn main() {
     let args = Args::parse();
@@ -215,6 +247,8 @@ fn main() {
             let default_interface = get_default_ip_dev().unwrap();
             
             generate_wg0_conf(ip, default_interface);
+
+            setup_port_forwarding();
             
        } 
        RoadGuardAction::AddClient => {
