@@ -31,7 +31,7 @@ podman build -t roadguard:dev
 
 Run it:
 ```bash
-podman run --rm -it roadguard:dev bash
+podman run --rm -it roadguard:dev sudo ./roadguard setup
 ```
 
 

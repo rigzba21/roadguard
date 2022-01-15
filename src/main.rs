@@ -208,8 +208,10 @@ fn setup_port_forwarding() {
     let status_code = output.status.code();
 
     match status_code {
-        Some(0) => println!("Successfully configured traffic port-forwarding in /etc/sysctl.conf"),
-        _ => eprintln!("Error configuring port-forwarding in /etc/sysctl.conf")
+        Some(0) => {
+            println!("Successfully configured traffic port-forwarding in /etc/sysctl.conf")
+        }
+        _ => eprintln!("Error configuring port-forwarding in /etc/sysctl.conf\n {:#?}", String::from_utf8(output.stderr).unwrap())
     }
 }
 
@@ -220,6 +222,51 @@ fn reload_sysctl() {
     .expect("failed to execute process");
 
     println!("{:#?}", String::from_utf8(output.stderr).unwrap());
+}
+
+fn enable_wg_on_startup() {
+    let systemctl_output = Command::new("systemctl")
+    .arg("enable")
+    .arg("wg-quick@wg0")
+    .output()
+    .expect("failed to execute process");
+
+    let systemctl_enable_status_code = systemctl_output.status.code();
+    match systemctl_enable_status_code {
+        Some(0) =>  {
+            println!("{:#?}", String::from_utf8(systemctl_output.stdout).unwrap());
+            println!("Successfully ran: systemctl enable wg-quick@wg0");
+        }
+        _ => eprintln!("Error running systemctl enable wg-quick@wg0\n {:#?}", String::from_utf8(systemctl_output.stderr).unwrap())
+    }
+
+    let chown_root = Command::new("chown")
+    .arg("-R")
+    .arg("root:root")
+    .arg("/etc/wireguard/")
+    .output()
+    .expect("failed to execute process");
+
+    let chown_root_code = chown_root.status.code();
+    match chown_root_code {
+        Some(0) => println!("Successfully ran: chown -R root:root /etc/wireguard/"),
+        _ => eprintln!("Error running: chown -R root:root /etc/wireguard/\n {:#?}", String::from_utf8(chown_root.stderr).unwrap())
+    }
+
+    let chmod_permissions = Command::new("chmod")
+    .arg("-R")
+    .arg("og-rwx")
+    .arg("/etc/wireguard/wg0.conf")
+    .output()
+    .expect("failed to execute process");
+
+    let chmod_permissions_status = chmod_permissions.status.code();
+    match chmod_permissions_status {
+        Some(0) => println!("Successfully ran: chmod -R og-rwx /etc/wireguard/*"),
+        _ => {
+            eprintln!("Error running: chmod -R og-rwx /etc/wireguard/*\n {:#?}", String::from_utf8(chmod_permissions.stderr).unwrap());
+        }
+    }
 }
 
 fn main() {
@@ -244,6 +291,7 @@ fn main() {
 
             reload_sysctl();
             
+            enable_wg_on_startup();
        } 
        RoadGuardAction::AddClient => {
         // TODO
