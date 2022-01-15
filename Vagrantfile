@@ -15,6 +15,7 @@ Vagrant.configure(2) do |config|
     sudo apt-get install -y \
         wireguard \
         resolvconf \
-        build-essential
+        build-essential \
+        qrencode
     SHELL
 end

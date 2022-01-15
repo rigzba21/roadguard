@@ -6,6 +6,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::fs;
 use std::io::{Write};
 
+
 #[derive(Debug)]
 pub enum WgInitErrors {
     FailedToGenPrivateKey,
@@ -293,8 +294,6 @@ fn wg_client_keys() {
     let _client_private_key = Command::new("wg")
         .arg("genkey")
         .output()
-        //.stdout(Stdio::piped())
-        //.spawn()
         .expect("Error running wg genkey");
 
     let client_private_key = String::from_utf8(_client_private_key.stdout).unwrap().replace("\n", "");
@@ -315,6 +314,17 @@ fn wg_client_keys() {
     
     let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
     println!("CLIENT PUBLIC KEY: {}", client_public_key);
+
+    let client = get_client_name();
+    println!("{}", client);
+}
+
+/// Helper function to get input for a client config name
+fn get_client_name() -> String {
+    let mut client_name = String::new();
+    println!("Enter Name of Client:");
+    let _line_bytes = std::io::stdin().read_line(&mut client_name).unwrap();
+    return client_name.replace("\n", "")
 }
 
 fn main() {
