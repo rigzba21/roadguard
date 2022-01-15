@@ -52,6 +52,11 @@ Run `roadguard` setup:
 sudo ./target/release/roadguard setup
 ```
 
+Verify that `wg0` is running:
+```bash
+sudo wg-quick up wg0
 
+sudo wg show
+```
 
 
