@@ -54,6 +54,7 @@ fn write_key_file(key: String, file: String) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Write the wg0.conf file using the 077 file permissions
 fn write_wg0_conf(wg0_conf: String, file: String) -> std::io::Result<()> {
     let mut file = File::create(file)?;
     let metadata = file.metadata()?;
@@ -169,14 +170,17 @@ fn get_default_ip_dev() -> Result<String, WgInitErrors> {
     }
 }
 
+/// Generate the wg0.conf file contents
 fn generate_wg0_conf(ip: String, interface: String) {
     let private_key = fs::read_to_string("server_private_key")
         .expect("Error Reading server_private_key");
     
+    // removing newlines
     let ip_val = ip.replace("\n", "");
     let private_key_val = private_key.replace("\n", "");
     let interface_val = interface.replace("\n", "");
     
+    // TODO: make this more configurable...
     let wg0_conf = format!(
 "[Interface]
 Address = {}/24
@@ -201,6 +205,7 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACC
     }
 }
 
+/// Setup port-forarding in /etc/sysct.conf
 fn setup_port_forwarding() {
     let output = Command::new("sed")
         .arg("-i")
@@ -219,13 +224,13 @@ fn setup_port_forwarding() {
     }
 }
 
+/// Reload sysctl
 fn reload_sysctl() {
     let output = Command::new("sysctl")
     .arg("-p")
     .output()
     .expect("failed to execute process");
 
-    //println!("{:#?}", String::from_utf8(output.stderr).unwrap());
     let status_code = output.status.code();
     match status_code {
         Some(0) => println!("Successfully reloaded sysctl"),
@@ -233,6 +238,7 @@ fn reload_sysctl() {
     }
 }
 
+/// Enable WireGuard on Startup
 fn enable_wg_on_startup() {
     let systemctl_output = Command::new("systemctl")
     .arg("enable")
@@ -243,7 +249,6 @@ fn enable_wg_on_startup() {
     let systemctl_enable_status_code = systemctl_output.status.code();
     match systemctl_enable_status_code {
         Some(0) =>  {
-            //println!("{:#?}", String::from_utf8(systemctl_output.stdout).unwrap());
             println!("Successfully ran: systemctl enable wg-quick@wg0");
         }
         _ => eprintln!("Error running systemctl enable wg-quick@wg0\n {:#?}", String::from_utf8(systemctl_output.stderr).unwrap())
