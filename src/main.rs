@@ -17,8 +17,14 @@ pub enum WgInitErrors {
 #[derive(Debug)]
 #[derive(clap::Subcommand)]
 enum RoadGuardAction {
+
+   /// Setup host as a WireGuard Server and allow for regular internet traffic through port-forwarding 
    Setup,
+
+   /// Generate a new client (peer) and add to the Server config, and generate a scannabler QR code 
    AddClient,
+
+   /// Remove an existing client (peer) from the Server config
    RemoveClient,
 }
 
@@ -283,6 +289,34 @@ fn enable_wg_on_startup() {
     }
 }
 
+fn wg_client_keys() {
+    let _client_private_key = Command::new("wg")
+        .arg("genkey")
+        .output()
+        //.stdout(Stdio::piped())
+        //.spawn()
+        .expect("Error running wg genkey");
+
+    let client_private_key = String::from_utf8(_client_private_key.stdout).unwrap().replace("\n", "");
+    println!("CLIENT PRIVATE KEY: {}", client_private_key);
+
+    let echo_private_key = Command::new("echo")
+        .arg(client_private_key.clone())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Error echo'ing private key to stdio");
+
+    let output = Command::new("wg")
+        .arg("pubkey")
+        //.stdin(_client_private_key.stdout.unwrap())
+        .stdin(echo_private_key.stdout.unwrap())
+        .output()
+        .expect("failed to generate client public key");
+    
+    let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
+    println!("CLIENT PUBLIC KEY: {}", client_public_key);
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -308,8 +342,7 @@ fn main() {
             enable_wg_on_startup();
        } 
        RoadGuardAction::AddClient => {
-        // TODO
-        println!("This functionality is a WIP");
+        wg_client_keys();
        }
        RoadGuardAction::RemoveClient => {
         // TODO
