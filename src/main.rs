@@ -5,7 +5,8 @@ use std::fs::File;
 use std::os::unix::fs::PermissionsExt;
 use std::fs;
 use std::io::{Write};
-
+use std::net::Ipv4Addr;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum WgInitErrors {
@@ -292,7 +293,7 @@ fn enable_wg_on_startup() {
 
 /// Generate a new Client Configuration
 /// TODO: this might need to be a separate module...
-fn wg_client_config() {
+fn wg_client_config(server_ip: String) {
     let _client_private_key = Command::new("wg")
         .arg("genkey")
         .output()
@@ -312,25 +313,30 @@ fn wg_client_config() {
         .output()
         .expect("failed to generate client public key");
     
-    let _client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
+    let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
 
     let _client = get_client_name();
 
     let peers_count = get_num_peers();
-    println!("{}", peers_count);
+    //println!("{}", peers_count);
+
+    let client_ip = generate_client_ip(peers_count, server_ip);
+    //println!("{}", _client_ip);
 
     //TODO: need to get these variables
     let _config = format!(
     "[Interface]
 PrivateKey = {}
-Address = $CLIENT_IP/32
+Address = {}/32
 DNS = 1.1.1.1
 
 [Peer]
-PublicKey = $WIREGUARD_SERVER_PUBLIC_KEY
+PublicKey = {}
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $WIREGUARD_DOMAIN:51900    
-", client_private_key);
+", client_private_key, client_ip, client_public_key);
+
+println!("{}", _config);
     
 }
 
@@ -368,6 +374,22 @@ fn get_num_peers() -> i32 {
     num_clients
 }
 
+/// Generate an IP adress for a new client
+fn generate_client_ip(_peer_count: i32, server_ip: String) -> String {
+    let ip_addr = Ipv4Addr::from_str(&server_ip).unwrap();
+    let mut octets = ip_addr.octets();
+    if _peer_count == 1 {
+        octets[3] = 2;
+        let client_ip = Ipv4Addr::to_string(&Ipv4Addr::from(octets));
+        return client_ip;
+    }
+    else {
+        octets[3] = octets[3] + 1;
+        let client_ip = Ipv4Addr::to_string(&Ipv4Addr::from(octets));
+        return client_ip;
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -393,7 +415,9 @@ fn main() {
             enable_wg_on_startup();
        } 
        RoadGuardAction::AddClient => {
-        wg_client_config();
+            let _ip = args.ip;
+
+            wg_client_config(_ip);
        }
        RoadGuardAction::RemoveClient => {
         // TODO
