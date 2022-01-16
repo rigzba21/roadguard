@@ -7,6 +7,7 @@ use std::fs;
 use std::io::{Write};
 use std::net::Ipv4Addr;
 use std::str::FromStr;
+use std::process::exit;
 
 #[derive(Debug)]
 pub enum WgInitErrors {
@@ -40,6 +41,10 @@ struct Args {
     /// Subcommand to generate client config
     #[clap(subcommand)]
     action: RoadGuardAction,
+
+    /// [Required for 'add-client'] Public Endpoint (Pubilc IP or DNS) of the WireGuard Server
+    #[clap(short, long, default_value = "")]
+    endpoint: String,
 }
 
 /// Generate the WireGuard Server Private Key
@@ -51,6 +56,7 @@ fn generate_private_key() {
         }
         _ => {
             println!("{:#?}", WgInitErrors::FailedToGenPrivateKey);
+            exit(1);
         }
     }
 }
@@ -209,7 +215,10 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACC
         Ok(()) => {
             println!("Successfully Wrote wg0.conf");
         }
-        _ => eprintln!("Error Writing /etc/wireguard/wg0.conf, please run: \n sudo roadguard setup")
+        _ => {
+            eprintln!("Error Writing /etc/wireguard/wg0.conf, please run: \n sudo roadguard setup");
+            exit(1);
+        }
     }
 }
 
@@ -228,7 +237,10 @@ fn setup_port_forwarding() {
         Some(0) => {
             println!("Successfully configured traffic port-forwarding in /etc/sysctl.conf")
         }
-        _ => eprintln!("Error configuring port-forwarding in /etc/sysctl.conf\n {:#?}", String::from_utf8(output.stderr).unwrap())
+        _ => {
+            eprintln!("Error configuring port-forwarding in /etc/sysctl.conf\n {:#?}", String::from_utf8(output.stderr).unwrap());
+            exit(1);
+        }
     }
 }
 
@@ -242,7 +254,10 @@ fn reload_sysctl() {
     let status_code = output.status.code();
     match status_code {
         Some(0) => println!("Successfully reloaded sysctl"),
-        _ => eprintln!("Error reloading sysctl")
+        _ => {
+            eprintln!("Error reloading sysctl");
+            exit(1);
+        }
     }
 }
 
@@ -259,7 +274,10 @@ fn enable_wg_on_startup() {
         Some(0) =>  {
             println!("Successfully ran: systemctl enable wg-quick@wg0");
         }
-        _ => eprintln!("Error running systemctl enable wg-quick@wg0\n {:#?}", String::from_utf8(systemctl_output.stderr).unwrap())
+        _ => {
+            eprintln!("Error running systemctl enable wg-quick@wg0\n {:#?}", String::from_utf8(systemctl_output.stderr).unwrap());
+            exit(1);
+        }
     }
 
     let chown_root = Command::new("chown")
@@ -272,7 +290,10 @@ fn enable_wg_on_startup() {
     let chown_root_code = chown_root.status.code();
     match chown_root_code {
         Some(0) => println!("Successfully ran: chown -R root:root /etc/wireguard/"),
-        _ => eprintln!("Error running: chown -R root:root /etc/wireguard/\n {:#?}", String::from_utf8(chown_root.stderr).unwrap())
+        _ => {
+            eprintln!("Error running: chown -R root:root /etc/wireguard/\n {:#?}", String::from_utf8(chown_root.stderr).unwrap());
+            exit(1);
+        }
     }
 
     let chmod_permissions = Command::new("chmod")
@@ -287,13 +308,14 @@ fn enable_wg_on_startup() {
         Some(0) => println!("Successfully ran: chmod -R og-rwx /etc/wireguard/*"),
         _ => {
             eprintln!("Error running: chmod -R og-rwx /etc/wireguard/*\n {:#?}", String::from_utf8(chmod_permissions.stderr).unwrap());
+            exit(1);
         }
     }
 }
 
 /// Generate a new Client Configuration
 /// TODO: this might need to be a separate module...
-fn wg_client_config(server_ip: String) {
+fn wg_client_config(server_ip: String, endpoint: String) {
     let _client_private_key = Command::new("wg")
         .arg("genkey")
         .output()
@@ -333,8 +355,8 @@ DNS = 1.1.1.1
 [Peer]
 PublicKey = {}
 AllowedIPs = 0.0.0.0/0, ::/0
-Endpoint = $WIREGUARD_DOMAIN:51900    
-", client_private_key, client_ip, client_public_key);
+Endpoint = {}:51900
+", client_private_key, client_ip, client_public_key, endpoint);
 
 println!("{}", _config);
     
@@ -416,8 +438,14 @@ fn main() {
        } 
        RoadGuardAction::AddClient => {
             let _ip = args.ip;
+            let _endpoint = args.endpoint;
 
-            wg_client_config(_ip);
+            if _endpoint == "" {
+                eprintln!("--endpoint <MY-ENDPOINT> flag not valid\n Please use: roadguard --endpoint MY-ENDPOINT add-client");
+                exit(1);
+            }
+
+            wg_client_config(_ip, _endpoint);
        }
        RoadGuardAction::RemoveClient => {
         // TODO
