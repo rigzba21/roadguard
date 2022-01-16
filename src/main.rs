@@ -299,7 +299,6 @@ fn wg_client_config() {
         .expect("Error running wg genkey");
 
     let client_private_key = String::from_utf8(_client_private_key.stdout).unwrap().replace("\n", "");
-    //println!("CLIENT PRIVATE KEY: {}", client_private_key);
 
     let echo_private_key = Command::new("echo")
         .arg(client_private_key.clone())
@@ -313,10 +312,12 @@ fn wg_client_config() {
         .output()
         .expect("failed to generate client public key");
     
-    let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
-    //println!("CLIENT PUBLIC KEY: {}", client_public_key);
+    let _client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
 
     let _client = get_client_name();
+
+    let peers_count = get_num_peers();
+    println!("{}", peers_count);
 
     //TODO: need to get these variables
     let _config = format!(
@@ -339,6 +340,32 @@ fn get_client_name() -> String {
     println!("Enter Name of Client:");
     let _line_bytes = std::io::stdin().read_line(&mut client_name).unwrap();
     return client_name.replace("\n", "")
+}
+
+/// Helper function to get the currently number of Wireguard Peers
+fn get_num_peers() -> i32 {
+    let wg_show = Command::new("wg")
+        .arg("show")
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Error running wg show");
+
+    let grep_peer = Command::new("grep")
+        .arg("peer")
+        .stdin(wg_show.stdout.unwrap())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Error grepping");
+    
+    let wc_l = Command::new("wc")
+        .arg("-l")
+        .stdin(grep_peer.stdout.unwrap())
+        .output()
+        .expect("Error running wc -l");
+
+    let num_clients_str = String::from_utf8(wc_l.stdout).unwrap().replace("\n", "");
+    let num_clients: i32 = num_clients_str.parse().unwrap();
+    num_clients
 }
 
 fn main() {
