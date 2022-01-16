@@ -299,7 +299,7 @@ fn wg_client_config() {
         .expect("Error running wg genkey");
 
     let client_private_key = String::from_utf8(_client_private_key.stdout).unwrap().replace("\n", "");
-    println!("CLIENT PRIVATE KEY: {}", client_private_key);
+    //println!("CLIENT PRIVATE KEY: {}", client_private_key);
 
     let echo_private_key = Command::new("echo")
         .arg(client_private_key.clone())
@@ -309,13 +309,12 @@ fn wg_client_config() {
 
     let output = Command::new("wg")
         .arg("pubkey")
-        //.stdin(_client_private_key.stdout.unwrap())
         .stdin(echo_private_key.stdout.unwrap())
         .output()
         .expect("failed to generate client public key");
     
     let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
-    println!("CLIENT PUBLIC KEY: {}", client_public_key);
+    //println!("CLIENT PUBLIC KEY: {}", client_public_key);
 
     let _client = get_client_name();
 
