@@ -22,7 +22,7 @@ enum RoadGuardAction {
    /// Setup host as a WireGuard Server and allow for regular internet traffic through port-forwarding 
    Setup,
 
-   /// Generate a new client (peer) and add to the Server config, and generate a scannabler QR code 
+   /// Generate a new client (peer) and add to the Server config, and generate a QR code for mobile app use
    AddClient,
 
    /// Remove an existing client (peer) from the Server config
@@ -290,7 +290,9 @@ fn enable_wg_on_startup() {
     }
 }
 
-fn wg_client_keys() {
+/// Generate a new Client Configuration
+/// TODO: this might need to be a separate module...
+fn wg_client_config() {
     let _client_private_key = Command::new("wg")
         .arg("genkey")
         .output()
@@ -315,8 +317,21 @@ fn wg_client_keys() {
     let client_public_key = String::from_utf8(output.stdout).unwrap().replace("\n", "");
     println!("CLIENT PUBLIC KEY: {}", client_public_key);
 
-    let client = get_client_name();
-    println!("{}", client);
+    let _client = get_client_name();
+
+    //TODO: need to get these variables
+    let _config = format!(
+    "[Interface]
+PrivateKey = {}
+Address = $CLIENT_IP/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = $WIREGUARD_SERVER_PUBLIC_KEY
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = $WIREGUARD_DOMAIN:51900    
+", client_private_key);
+    
 }
 
 /// Helper function to get input for a client config name
@@ -352,7 +367,7 @@ fn main() {
             enable_wg_on_startup();
        } 
        RoadGuardAction::AddClient => {
-        wg_client_keys();
+        wg_client_config();
        }
        RoadGuardAction::RemoveClient => {
         // TODO
