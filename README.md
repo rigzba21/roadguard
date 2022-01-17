@@ -15,18 +15,52 @@ sudo apt-get install -y \
     qrencode
 ```
 
-### Setup a WireGuard Server with Default Values
-In a terminal run:
-
+Install `roadguard`:
 ```bash
-cargo build --release
-sudo ./target/release/roadguard setup
+wget https://github.com/rigzba21/roadguard/releases/download/v0.0.1/roadguard-x86_64 -O roadguard
+sudo install -m 755 roadguard /usr/local/bin/roadguard
 ```
 
-This configures the system to act as a WireGuard server with IPTables rules configured 
-to allow regular internet access via traffic forwarding. 
+Setup WireGuard as a server with traffic port-forwarding for regular internet access:
+```bash
+sudo roadguard setup
+```
 
-## Development
+Enable the `wg0` interface:
+```bash
+sudo wg-quick up wg0
+```
+
+Verify that it's up and running:
+```bash
+sudo wg show
+```
+
+At this point you will have to setup a publically accessible endpoint for your WireGuard server. If you
+are running this on a cloud instance like EC2, you can either use the public IP address (or public DNS) or setup a DNS
+record with with domain using your DNS Provider of choice. 
+
+If you are running the server on your own network, such as a Raspbery Pi, you will need to configure your router to
+port-forward traffic on `51900`. Once you've configured port-forwarding to your server, you'll need to setup either a
+DNS record that points towards your public IP address or use a Dynamic DNS Provider. 
+
+
+Once you've configured a public endpoint (Dynamic DNS, Public IP, etc.) you can now add a client (peer).
+
+Adding a client (peer) and generate a config file named `MY-CLIENT-NAME.conf`:
+```bash
+sudo roadguard --endpoint MY-SERVER-ENDPOINT add-client
+```
+You'll be prompted to enter in a name for this client, and will generate a config file named 
+`MY-CLIENT-NAME.conf`.
+
+If you've installed `qrencode` you can generate a QR code for easy mobile device configuration
+with the WireGuard mobile apps:
+```bash
+qrencode -t ansiutf8 -r MY-CLIENT-NAME.conf
+```
+
+## Development Setup
 
 There is a `Vagrantfile` for easy development and testing.
 
@@ -65,4 +99,7 @@ sudo wg-quick up wg0
 sudo wg show
 ```
 
+# License
+
+[MIT License](https://github.com/rigzba21/roadguard/blob/main/LICENSE)
 
