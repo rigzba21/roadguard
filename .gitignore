@@ -13,3 +13,5 @@ server_private_key
 server_public_key
 
 .vagrant/
+
+*.conf

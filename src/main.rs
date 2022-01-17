@@ -314,7 +314,6 @@ fn enable_wg_on_startup() {
 }
 
 /// Generate a new Client Configuration
-/// TODO: this might need to be a separate module...
 fn wg_client_config(server_ip: String, endpoint: String) {
     let _client_private_key = Command::new("wg")
         .arg("genkey")
@@ -340,12 +339,9 @@ fn wg_client_config(server_ip: String, endpoint: String) {
     let _client = get_client_name();
 
     let peers_count = get_num_peers();
-    //println!("{}", peers_count);
 
     let client_ip = generate_client_ip(peers_count, server_ip);
-    //println!("{}", _client_ip);
 
-    //TODO: need to get these variables
     let _config = format!(
     "[Interface]
 PrivateKey = {}
@@ -358,8 +354,22 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = {}:51900
 ", client_private_key, client_ip, client_public_key, endpoint);
 
-println!("{}", _config);
-    
+    println!("{}", _config);
+
+    let client_config_filename = format!("{}.conf", _client);
+    let result = write_key_file(_config, client_config_filename);
+
+    match result {
+        Ok(()) => {
+            println!("Successfully Wrote client config file");
+            wg0_set_peer(client_public_key, client_ip);
+        }
+        _ => {
+            eprintln!("Error Writing client config file");
+            exit(1);
+        }
+    }
+
 }
 
 /// Helper function to get input for a client config name
@@ -399,16 +409,35 @@ fn get_num_peers() -> i32 {
 /// Generate an IP adress for a new client
 fn generate_client_ip(_peer_count: i32, server_ip: String) -> String {
     let ip_addr = Ipv4Addr::from_str(&server_ip).unwrap();
-    let mut octets = ip_addr.octets();
-    if _peer_count == 1 {
-        octets[3] = 2;
-        let client_ip = Ipv4Addr::to_string(&Ipv4Addr::from(octets));
-        return client_ip;
-    }
-    else {
-        octets[3] = octets[3] + 1;
-        let client_ip = Ipv4Addr::to_string(&Ipv4Addr::from(octets));
-        return client_ip;
+    let octets = ip_addr.octets();
+
+    let new_octet: u8 = (_peer_count + 2).try_into().unwrap();
+    let new_ip: [u8; 4] = [octets[0], octets[1], octets[2], new_octet];
+    let client_ip = Ipv4Addr::to_string(&Ipv4Addr::from(new_ip));
+    return client_ip;
+}
+
+fn wg0_set_peer(public_key: String, allowed_ip: String) {
+    let wg0_set_peer = Command::new("wg")
+    .arg("set")
+    .arg("wg0")
+    .arg("peer")
+    .arg(public_key)
+    .arg("allowed-ips")
+    .arg(allowed_ip)
+    .output()
+    .expect("Error running wc -l");
+
+    let status_code = wg0_set_peer.status.code();
+    match status_code {
+        Some(0) => {
+            println!("Successfully set wg0 peer");
+        }
+        _ => {
+            eprintln!("Error running wg set wg0 peer");
+            eprintln!("{:#?}", String::from_utf8(wg0_set_peer.stderr).unwrap());
+            exit(1);
+        }
     }
 }
 
@@ -446,6 +475,8 @@ fn main() {
             }
 
             wg_client_config(_ip, _endpoint);
+            println!("To generate a QR code for easy mobile app configuration, run the following:\n");
+            println!("qrencode -t ansiutf8 -r MY-CLIENT.conf");
        }
        RoadGuardAction::RemoveClient => {
         // TODO
