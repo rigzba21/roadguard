@@ -36,16 +36,13 @@ Verify that it's up and running:
 sudo wg show
 ```
 
-At this point you will have to setup a publically accessible endpoint for your WireGuard server. If you
-are running this on a cloud instance like EC2, you can either use the public IP address (or public DNS) or setup a DNS
-record with with domain using your DNS Provider of choice. 
+At this point, you will have to set up a public endpoint for your WireGuard server. If you are running this on a cloud instance like EC2, you can either use the public IP address (or public DNS) or set up a DNS
+record with a domain using your DNS Provider of choice. 
 
-If you are running the server on your own network, such as a Raspbery Pi, you will need to configure your router to
-port-forward traffic on `51900`. Once you've configured port-forwarding to your server, you'll need to setup either a
-DNS record that points towards your public IP address or use a Dynamic DNS Provider. 
+If you run the server on your network, such as a Raspberry Pi, you will need to configure your router to port-forward traffic on `51900`. Once you've configured port-forwarding to your server, you'll need to set up a DNS record that points towards your public IP address or set up a Dynamic DNS.
 
 
-Once you've configured a public endpoint (Dynamic DNS, Public IP, etc.) you can now add a client (peer).
+Once you've configured a public endpoint (Dynamic DNS, Public IP, etc.), you can now add a client (peer).
 
 Adding a client (peer) and generate a config file named `MY-CLIENT-NAME.conf`:
 ```bash
