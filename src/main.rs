@@ -342,6 +342,11 @@ fn wg_client_config(server_ip: String, endpoint: String) {
 
     let client_ip = generate_client_ip(peers_count, server_ip);
 
+    let server_public_key = fs::read_to_string("server_public_key")
+        .expect("Error Reading server_public_key");
+    let server_public_key_val = server_public_key.replace("\n", "");
+
+
     let _config = format!(
     "[Interface]
 PrivateKey = {}
@@ -352,7 +357,7 @@ DNS = 1.1.1.1
 PublicKey = {}
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = {}:51900
-", client_private_key, client_ip, client_public_key, endpoint);
+", client_private_key, client_ip, server_public_key_val, endpoint);
 
     println!("{}", _config);
 
