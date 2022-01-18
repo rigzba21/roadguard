@@ -17,7 +17,7 @@ sudo apt-get install -y \
 
 Install `roadguard`:
 ```bash
-wget https://github.com/rigzba21/roadguard/releases/download/v0.0.1/roadguard-x86_64 -O roadguard
+wget https://github.com/rigzba21/roadguard/releases/download/v0.0.2/roadguard-x86_64 -O roadguard
 sudo install -m 755 roadguard /usr/local/bin/roadguard
 ```
 
