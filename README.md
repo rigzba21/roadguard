@@ -5,8 +5,8 @@ A Rust binary for easy [road warrior](https://en.wikipedia.org/wiki/Road_warrior
 ## Quickstart
 At this time `roadguard` only runs on Linux.
 
-#### Prerequisites
-**Ubuntu/Debian**: Install dependencies with:
+**Ubuntu/Debian Quickstart**:
+Install dependencies:
 ```bash
 sudo apt-get install -y \
     wireguard \
