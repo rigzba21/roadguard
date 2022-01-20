@@ -5,7 +5,7 @@ A Rust binary for easy [road warrior](https://en.wikipedia.org/wiki/Road_warrior
 ## Quickstart
 At this time `roadguard` only runs on Linux.
 
-**Ubuntu/Debian Quickstart**
+**Ubuntu 21.04 Quickstart**
 
 Install dependencies:
 ```bash
